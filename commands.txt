@@ -1,0 +1,10 @@
+to compile c version -
+gcc cpu_version.c -o cpu_version.out -lm
+
+to compile cuda version -
+nvcc cuda_version.c -o cuda_version.out 
+
+ignore warnings
+
+to run either output -
+./output_file.out input.png output.txt
