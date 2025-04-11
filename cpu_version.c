@@ -8,7 +8,7 @@
 #include "stb_image.h"
 
 #define DOWNSAMPLE 2
-#define CHAR_SET " .,-~:;=!*#$@"
+#define CHAR_SET " .-:=$@"
 
 void computeCDF(unsigned char* img, int size, int* cdf) {
     int hist[256] = {0};
@@ -80,9 +80,9 @@ void asciiEdgeCPU(float* dogImg, unsigned char* eqImg, char* ascii, int width, i
             if (magnitude > threshold) {
                 float angle = atan2f(Gy, Gx) * 180.0f / 3.14159265f;
                 if (angle < 0) angle += 180.0f;
-                if ((angle >= 0 && angle < 22.5) || (angle >= 157.5 && angle <= 180)) ch = '_';
-                else if (angle >= 22.5 && angle < 67.5) ch = '/';
-                else if (angle >= 67.5 && angle < 112.5) ch = '|';
+                if ((angle >= 0 && angle < 30) || (angle >= 150 && angle <= 180)) ch = '_';
+                else if (angle >= 30 && angle < 60) ch = '/';
+                else if (angle >= 60 && angle < 120) ch = '|';
                 else ch = '\\';
             } else {
                 float val = eqImg[y * width + x] / 255.0f;
@@ -127,12 +127,12 @@ int main(int argc, char* argv[]) {
     histogramEqualizeCPU(img, equalized, cdf, size);
     
     // DoG = Gaussian(small) - Gaussian(large) (matching GPU version)
-    gaussianBlurCPU(equalized, gauss1, width, height, 0.8f);
-    gaussianBlurCPU(equalized, gauss2, width, height, 2.0f);
+    gaussianBlurCPU(equalized, gauss1, width, height, 2.9f);
+    gaussianBlurCPU(equalized, gauss2, width, height, 4.0f);
     subtractGaussiansCPU(gauss1, gauss2, dog, size);
     
     // ASCII edge detection using DoG (matching GPU version)
-    asciiEdgeCPU(dog, equalized, ascii, width, height, 100, dsWidth, dsHeight);
+    asciiEdgeCPU(dog, equalized, ascii, width, height, 25, dsWidth, dsHeight);
 
     FILE* out = fopen(argv[2], "w");
     if (!out) {

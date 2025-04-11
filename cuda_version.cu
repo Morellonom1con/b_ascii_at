@@ -9,7 +9,7 @@
 
 #define DOWNSAMPLE 2
 #define BLOCK_SIZE 16
-#define CHAR_SET " .,-~:;=!*#$@"
+#define CHAR_SET " .-:=$@"
 
 // --- CUDA kernel: Histogram Equalization ---
 __global__ void histogramEqualize(unsigned char* img, unsigned char* equalized, int* cdf, int size) {
@@ -67,9 +67,9 @@ __global__ void asciiEdgeKernel(float* dogImg, unsigned char* eqImg, char* ascii
     if (magnitude > threshold) {
         float angle = atan2f(Gy, Gx) * 180.0f / 3.14159265f;
         if (angle < 0) angle += 180.0f;
-        if ((angle >= 0 && angle < 22.5) || (angle >= 157.5 && angle <= 180)) ch = '_';
-        else if (angle >= 22.5 && angle < 67.5) ch = '/';
-        else if (angle >= 67.5 && angle < 112.5) ch = '|';
+        if ((angle >= 0 && angle < 30) || (angle >= 150 && angle <= 180)) ch = '_';
+        else if (angle >= 30 && angle < 60) ch = '/';
+        else if (angle >= 60 && angle < 120) ch = '|';
         else ch = '\\';
     } else {
         float val = eqImg[y * width + x] / 255.0f;
@@ -148,8 +148,8 @@ int main(int argc, char* argv[]) {
     // DoG = Gaussian(small) - Gaussian(large)
     dim3 blockSize(BLOCK_SIZE, BLOCK_SIZE);
     dim3 gridSize((width + BLOCK_SIZE - 1) / BLOCK_SIZE, (height + BLOCK_SIZE - 1) / BLOCK_SIZE);
-    gaussianBlur<<<gridSize, blockSize>>>(d_eqImg, d_gauss1, width, height, 0.8f);
-    gaussianBlur<<<gridSize, blockSize>>>(d_eqImg, d_gauss2, width, height, 2.0f);
+    gaussianBlur<<<gridSize, blockSize>>>(d_eqImg, d_gauss1, width, height, 0.8f);//2.9 for poower ranger
+    gaussianBlur<<<gridSize, blockSize>>>(d_eqImg, d_gauss2, width, height, 2.0f);//4.0 for power ranger
 
     // Subtract the Gaussians to get DoG
     int totalThreads = width * height;
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
 
 
     // ASCII edge kernel
-    asciiEdgeKernel<<<gridSize, blockSize>>>(d_dog, d_eqImg, d_ascii, width, height, 100, dsWidth);
+    asciiEdgeKernel<<<gridSize, blockSize>>>(d_dog, d_eqImg, d_ascii, width, height, 100, dsWidth);//25 for power ranger
     cudaMemcpy(ascii, d_ascii, asciiSize, cudaMemcpyDeviceToHost);
 
     FILE* out = fopen(argv[2], "w");
